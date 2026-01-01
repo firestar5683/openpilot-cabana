@@ -47,10 +47,15 @@ void ReplayStream::mergeSegments() {
 }
 
 bool ReplayStream::loadRoute(const QString &route, const QString &data_dir, uint32_t replay_flags, bool auto_source) {
-  replay_flags |= REPLAY_FLAG_LOW_MEMORY;
-  replay.reset(new Replay(route.toStdString(), {"can", "roadEncodeIdx", "driverEncodeIdx", "wideRoadEncodeIdx", "carParams"},
-                          {}, nullptr, replay_flags, data_dir.toStdString(), auto_source));
-  replay->setSegmentCacheLimit(settings.max_cached_minutes);
+  ReplayConfig cfg = {
+    .data_dir = data_dir.toStdString(),
+    .route = route.toStdString(),
+    .flags = replay_flags | REPLAY_FLAG_LOW_MEMORY,
+    .cache_segments = settings.max_cached_minutes,
+    .auto_source = auto_source,
+    .allow = {"can", "roadEncodeIdx", "driverEncodeIdx", "wideRoadEncodeIdx", "carParams"},
+  };
+  replay.reset(new Replay(cfg));
   replay->installEventFilter([this](const Event *event) { return eventFilter(event); });
 
   // Forward replay callbacks to corresponding Qt signals.

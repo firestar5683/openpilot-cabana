@@ -64,23 +64,15 @@ env = Environment(
   CPPPATH=[
     "#",
     "#replay",
-    "#replay/third_pary/libyuv/include",
     # "#include",
     
     "#replay/msgq",
-    "#replay/third_pary",
-    "#replay/third_pary/json11",
-    "#replay/third_pary/linux/include",
-    "#replay/third_pary/catch2/include",
     
     "#replay/include"
   ],
   LIBPATH=[
     "#replay/common",
     "#replay/msgq",
-    # "#third_party",
-    "#replay/third_party",
-    # f"#replay/third_pary/libyuv/{arch}/lib",
   ],
   RPATH=[],
   CYTHONCFILESUFFIX=".cpp",
@@ -92,7 +84,6 @@ env = Environment(
 
 # Arch-specific flags and paths
 if arch == "larch64":
-  env.Append(CPPPATH=["#replay/third_pary/opencl/include"])
   env.Append(LIBPATH=[
     "/usr/local/lib",
     "/system/vendor/lib64",
@@ -163,10 +154,9 @@ CacheDir(cache_dir)
 Clean(["."], cache_dir)
 
 # ********** start building stuff **********
-SConscript(['replay/third_party/SConscript'])
 SConscript(['#replay/common/SConscript'])
-Import('_common')
-common = [_common, 'json11', 'zmq']
+Import('common')
+common = [common, 'zmq']
 Export('common')
 
 # Build messaging (cereal + msgq + socketmaster + their dependencies)
@@ -178,5 +168,6 @@ Import('socketmaster', 'msgq', 'cereal')
 messaging = [socketmaster, msgq, 'capnp', 'kj',]
 Export('messaging')
 
-SConscript(['#replay/SConscript'])
+replay_lib = SConscript(['#replay/SConscript'])
+Export('replay_lib')
 SConscript(['src/SConscript'])
