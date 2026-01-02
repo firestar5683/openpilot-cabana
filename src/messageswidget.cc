@@ -194,14 +194,14 @@ QVariant MessageListModel::data(const QModelIndex &index, int role) const {
       case Column::SOURCE: return item.id.source != INVALID_SOURCE ? QString::number(item.id.source) : NA;
       case Column::ADDRESS: return toHexString(item.id.address);
       case Column::NODE: return item.node;
-      case Column::FREQ: return item.id.source != INVALID_SOURCE ? getFreq(can->lastMessage(item.id)->freq) : NA;
-      case Column::COUNT: return item.id.source != INVALID_SOURCE ? QString::number(can->lastMessage(item.id)->count) : NA;
+      case Column::FREQ: return item.id.source != INVALID_SOURCE ? getFreq(item.data->freq) : NA;
+      case Column::COUNT: return item.id.source != INVALID_SOURCE ? QString::number(item.data->count) : NA;
       case Column::DATA: return item.id.source != INVALID_SOURCE ? "" : NA;
     }
   } else if (role == ColorsRole) {
-    return QVariant::fromValue((void*)(&can->lastMessage(item.id)->colors));
+    return QVariant::fromValue((void*)(&item.data->colors));
   } else if (role == BytesRole && index.column() == Column::DATA && item.id.source != INVALID_SOURCE) {
-    return QVariant::fromValue((void*)(&can->lastMessage(item.id)->dat));
+    return QVariant::fromValue((void*)(&item.data->dat));
   } else if (role == Qt::ToolTipRole && index.column() == Column::NAME) {
     auto msg = dbc()->msg(item.id);
     auto tooltip = item.name;
@@ -242,8 +242,8 @@ void MessageListModel::sortItems(std::vector<MessageListModel::Item> &items) {
     case Column::SOURCE: do_sort([](auto &l, auto &r){ return std::tie(l.id.source, l.id.address) < std::tie(r.id.source, r.id.address); }); break;
     case Column::ADDRESS: do_sort([](auto &l, auto &r){ return std::tie(l.id.address, l.id.source) < std::tie(r.id.address, r.id.source); }); break;
     case Column::NODE: do_sort([](auto &l, auto &r){ return std::tie(l.node, l.id) < std::tie(r.node, r.id); }); break;
-    case Column::FREQ: do_sort([](auto &l, auto &r){ return std::tie(can->lastMessage(l.id)->freq, l.id) < std::tie(can->lastMessage(r.id)->freq, r.id); }); break;
-    case Column::COUNT: do_sort([](auto &l, auto &r){ return std::tie(can->lastMessage(l.id)->count, l.id) < std::tie(can->lastMessage(r.id)->count, r.id); }); break;
+    case Column::FREQ: do_sort([](auto &l, auto &r){ return std::tie(l.data->freq, l.id) < std::tie(r.data->freq, r.id); }); break;
+    case Column::COUNT: do_sort([](auto &l, auto &r){ return std::tie(l.data->count, l.id) < std::tie(r.data->count, r.id); }); break;
     default: break; // Default case to suppress compiler warning
   }
 }
@@ -268,7 +268,6 @@ bool MessageListModel::match(const MessageListModel::Item &item) {
     return true;
 
   bool match = true;
-  const auto *data = can->lastMessage(item.id);
   for (auto it = filters_.cbegin(); it != filters_.cend() && match; ++it) {
     const QString &txt = it.value();
     switch (it.key()) {
@@ -292,13 +291,13 @@ bool MessageListModel::match(const MessageListModel::Item &item) {
         match = item.node.contains(txt, Qt::CaseInsensitive);
         break;
       case Column::FREQ:
-        match = parseRange(txt, data->freq);
+        match = parseRange(txt, item.data->freq);
         break;
       case Column::COUNT:
-        match = parseRange(txt, data->count);
+        match = parseRange(txt, item.data->count);
         break;
       case Column::DATA:
-        match = utils::toHex(data->dat).contains(txt, Qt::CaseInsensitive);
+        match = utils::toHex(item.data->dat).contains(txt, Qt::CaseInsensitive);
         break;
     }
   }
@@ -322,9 +321,12 @@ bool MessageListModel::filterAndSort() {
   for (const auto &id : all_messages) {
     if (show_inactive_messages || can->isMessageActive(id)) {
       auto msg = dbc()->msg(id);
-      Item item = {.id = id,
-                  .name = msg ? msg->name : UNTITLED,
-                  .node = msg ? msg->transmitter : QString()};
+      Item item = {
+          .id = id,
+          .name = msg ? msg->name : UNTITLED,
+          .node = msg ? msg->transmitter : QString(),
+          .data = can->lastMessage(id),
+      };
       if (match(item))
         items.emplace_back(item);
     }
