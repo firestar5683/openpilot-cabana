@@ -615,12 +615,12 @@ std::pair<QModelIndex, QModelIndex> SignalView::visibleSignalRange() {
 }
 
 void SignalView::updateState(const std::set<MessageId> *msgs) {
-  const auto &last_msg = can->lastMessage(model->msg_id);
-  if (model->rowCount() == 0 || (msgs && !msgs->count(model->msg_id)) || last_msg.dat.size() == 0) return;
+  const auto *last_msg = can->lastMessage(model->msg_id);
+  if (model->rowCount() == 0 || (msgs && !msgs->count(model->msg_id)) || last_msg->dat.size() == 0) return;
 
   for (auto item : model->root->children) {
     double value = 0;
-    if (item->sig->getValue(last_msg.dat.data(), last_msg.dat.size(), &value)) {
+    if (item->sig->getValue(last_msg->dat.data(), last_msg->dat.size(), &value)) {
       item->sig_val = item->sig->formatValue(value);
       max_value_width = std::max(max_value_width, fontMetrics().horizontalAdvance(item->sig_val));
     }
@@ -634,7 +634,7 @@ void SignalView::updateState(const std::set<MessageId> *msgs) {
     QSize size(available_width - value_width,
                delegate->button_size.height() - style()->pixelMetric(QStyle::PM_FocusFrameVMargin) * 2);
 
-    auto [first, last] = can->eventsInRange(model->msg_id, std::make_pair(last_msg.ts -settings.sparkline_range, last_msg.ts));
+    auto [first, last] = can->eventsInRange(model->msg_id, std::make_pair(last_msg->ts -settings.sparkline_range, last_msg->ts));
     QFutureSynchronizer<void> synchronizer;
     for (int i = first_visible.row(); i <= last_visible.row(); ++i) {
       auto item = model->getItem(model->index(i, 1));

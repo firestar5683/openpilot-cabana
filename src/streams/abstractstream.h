@@ -82,11 +82,11 @@ public:
   inline uint64_t toMonoTime(double sec) const { return beginMonoTime() + std::max(sec, 0.0) * 1e9; }
   inline double toSeconds(uint64_t mono_time) const { return std::max(0.0, (mono_time - beginMonoTime()) / 1e9); }
 
-  inline const std::unordered_map<MessageId, CanData> &lastMessages() const { return last_msgs; }
+  inline const std::unordered_map<MessageId, std::unique_ptr<CanData>> &lastMessages() const { return last_msgs; }
   bool isMessageActive(const MessageId &id) const;
   inline const MessageEventsMap &eventsMap() const { return events_; }
   inline const std::vector<const CanEvent *> &allEvents() const { return all_events_; }
-  const CanData &lastMessage(const MessageId &id) const;
+  const CanData* lastMessage(const MessageId& id) const;
   const std::vector<const CanEvent *> &events(const MessageId &id) const;
   std::pair<CanEventIter, CanEventIter> eventsInRange(const MessageId &id, std::optional<std::pair<double, double>> time_range) const;
 
@@ -123,7 +123,7 @@ private:
   void updateMasks();
 
   MessageEventsMap events_;
-  std::unordered_map<MessageId, CanData> last_msgs;
+  std::unordered_map<MessageId, std::unique_ptr<CanData>> last_msgs;
   std::unique_ptr<MonotonicBuffer> event_buffer_;
 
   // Members accessed in multiple threads. (mutex protected)

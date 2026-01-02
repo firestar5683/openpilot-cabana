@@ -75,7 +75,7 @@ void AbstractStream::clearSuppressed() {
 
 void AbstractStream::updateLastMessages() {
   auto prev_src_size = sources.size();
-  auto prev_msg_size = last_msgs.size();
+  bool has_new_ids = false;
   std::set<MessageId> msgs;
 
   {
@@ -83,7 +83,13 @@ void AbstractStream::updateLastMessages() {
     for (const auto &id : new_msgs_) {
       const auto &can_data = messages_[id];
       current_sec_ = std::max(current_sec_, can_data.ts);
-      last_msgs[id] = can_data;
+      auto& target_ptr = last_msgs[id];
+      if (target_ptr) {
+        *target_ptr = can_data;
+      } else {
+        target_ptr = std::make_unique<CanData>(can_data);
+        has_new_ids = true;
+      }
       sources.insert(id.source);
     }
     msgs = std::move(new_msgs_);
@@ -98,7 +104,7 @@ void AbstractStream::updateLastMessages() {
     updateMasks();
     emit sourcesUpdated(sources);
   }
-  emit msgsReceived(&msgs, prev_msg_size != last_msgs.size());
+  emit msgsReceived(&msgs, has_new_ids);
 }
 
 void AbstractStream::setTimeRange(const std::optional<std::pair<double, double>> &range) {
@@ -121,10 +127,10 @@ const std::vector<const CanEvent *> &AbstractStream::events(const MessageId &id)
   return it != events_.end() ? it->second : empty_events;
 }
 
-const CanData &AbstractStream::lastMessage(const MessageId &id) const {
+const CanData *AbstractStream::lastMessage(const MessageId &id) const {
   static CanData empty_data = {};
   auto it = last_msgs.find(id);
-  return it != last_msgs.end() ? it->second : empty_data;
+  return it != last_msgs.end() ? it->second.get() : &empty_data;
 }
 
 bool AbstractStream::isMessageActive(const MessageId &id) const {
@@ -132,14 +138,14 @@ bool AbstractStream::isMessageActive(const MessageId &id) const {
     return false;
   }
   // Check if the message is active based on time difference and frequency
-  const auto &m = lastMessage(id);
-  float delta = currentSec() - m.ts;
+  const auto *m = lastMessage(id);
+  float delta = currentSec() - m->ts;
 
-  if (m.freq < std::numeric_limits<double>::epsilon()) {
+  if (m->freq < std::numeric_limits<double>::epsilon()) {
     return delta < 1.5;
   }
 
-  return delta < (5.0 / m.freq) + (1.0 / settings.fps);
+  return delta < (5.0 / m->freq) + (1.0 / settings.fps);
 }
 
 void AbstractStream::updateLastMsgsTo(double sec) {
@@ -170,10 +176,13 @@ void AbstractStream::updateLastMsgsTo(double sec) {
 
   new_msgs_.clear();
   messages_ = std::move(msgs);
+
   bool id_changed = messages_.size() != last_msgs.size() ||
                     std::any_of(messages_.cbegin(), messages_.cend(),
                                 [this](const auto &m) { return !last_msgs.count(m.first); });
-  last_msgs = messages_;
+  for (const auto &[id, m] : messages_) {
+    last_msgs[id] = std::make_unique<CanData>(m);
+  }
   emit msgsReceived(nullptr, id_changed);
 
   std::lock_guard lk(mutex_);

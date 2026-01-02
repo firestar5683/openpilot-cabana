@@ -272,7 +272,7 @@ void BinaryViewModel::refresh() {
       }
     }
   } else {
-    row_count = can->lastMessage(msg_id).dat.size();
+    row_count = can->lastMessage(msg_id)->dat.size();
     items.resize(row_count * column_count);
   }
   endResetModel();
@@ -291,8 +291,8 @@ void BinaryViewModel::updateItem(int row, int col, uint8_t val, const QColor &co
 }
 
 void BinaryViewModel::updateState() {
-  const auto &last_msg = can->lastMessage(msg_id);
-  const auto &binary = last_msg.dat;
+  const auto *last_msg = can->lastMessage(msg_id);
+  const auto &binary = last_msg->dat;
   // Handle size changes in binary data
   if (binary.size() > row_count) {
     beginInsertRows({}, row_count, binary.size() - 1);
@@ -301,7 +301,7 @@ void BinaryViewModel::updateState() {
     endInsertRows();
   }
 
-  auto &bit_flips = heatmap_live_mode ? last_msg.bit_flip_counts : getBitFlipChanges(binary.size());
+  auto &bit_flips = heatmap_live_mode ? last_msg->bit_flip_counts : getBitFlipChanges(binary.size());
   // Find the maximum bit flip count across the message
   uint32_t max_bit_flip_count = 1;  // Default to 1 to avoid division by zero
   for (const auto &row : bit_flips) {
@@ -333,7 +333,7 @@ void BinaryViewModel::updateState() {
       color.setAlpha(alpha);
       updateItem(i, j, bit_val, color);
     }
-    updateItem(i, 8, binary[i], last_msg.colors[i]);
+    updateItem(i, 8, binary[i], last_msg->colors[i]);
   }
 }
 
