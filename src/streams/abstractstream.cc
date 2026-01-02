@@ -282,6 +282,7 @@ void CanData::compute(const MessageId &msg_id, const uint8_t *can_data, const in
 
     for (int i = 0; i < size; ++i) {
       auto &last_change = last_changes[i];
+      auto &color = colors[i];
 
       uint8_t mask_byte = last_change.suppressed ? 0x00 : 0xFF;
       if (i < mask.size()) mask_byte &= ~(mask[i]);
@@ -298,10 +299,10 @@ void CanData::compute(const MessageId &msg_id, const uint8_t *can_data, const in
         // Mostly moves in the same direction, color based on delta up/down
         if (delta_t * freq > periodic_threshold || last_change.same_delta_counter > 8) {
           // Last change was while ago, choose color based on delta up or down
-          colors[i] = getColor(cur > last ? CYAN : RED);
+          color = getColor(cur > last ? CYAN : RED);
         } else {
           // Periodic changes
-          colors[i] = blend(colors[i], getColor(GREYISH_BLUE));
+          color = blend(color, getColor(GREYISH_BLUE));
         }
 
         // Track bit level changes
@@ -315,9 +316,8 @@ void CanData::compute(const MessageId &msg_id, const uint8_t *can_data, const in
 
         last_change.ts = ts;
         last_change.delta = delta;
-      } else {
-        // Fade out
-        colors[i].setAlphaF(std::max(0.0, colors[i].alphaF() - alpha_delta));
+      } else if (color.alphaF() > 0.0) {
+        color.setAlphaF(color.alphaF() - alpha_delta);
       }
 
       dat[i] = can_data[i];
