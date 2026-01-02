@@ -16,7 +16,7 @@ AbstractStream::AbstractStream(QObject *parent) : QObject(parent) {
   event_buffer_ = std::make_unique<MonotonicBuffer>(EVENT_NEXT_BUFFER_SIZE);
 
   QObject::connect(this, &AbstractStream::privateUpdateLastMsgsSignal, this, &AbstractStream::commitSnapshots, Qt::QueuedConnection);
-  QObject::connect(this, &AbstractStream::seekedTo, this, &AbstractStream::updateLastMsgsTo);
+  QObject::connect(this, &AbstractStream::seekedTo, this, &AbstractStream::updateSnapshotsTo);
   QObject::connect(this, &AbstractStream::seeking, this, [this](double sec) { current_sec_ = sec; });
   QObject::connect(dbc(), &DBCManager::DBCFileChanged, this, &AbstractStream::updateMasks);
   QObject::connect(dbc(), &DBCManager::maskUpdated, this, &AbstractStream::updateMasks);
@@ -158,7 +158,7 @@ bool AbstractStream::isMessageActive(const MessageId &id) const {
   return delta < (5.0 / m->freq) + (1.0 / settings.fps);
 }
 
-void AbstractStream::updateLastMsgsTo(double sec) {
+void AbstractStream::updateSnapshotsTo(double sec) {
   current_sec_ = sec;
   uint64_t last_ts = toMonoTime(sec);
   std::unordered_map<MessageId, CanData> msgs;

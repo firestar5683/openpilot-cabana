@@ -98,7 +98,7 @@ protected:
 
 private:
   void commitSnapshots();
-  void updateLastMsgsTo(double sec);
+  void updateSnapshotsTo(double sec);
   void updateMasks();
 
   MessageEventsMap events_;
