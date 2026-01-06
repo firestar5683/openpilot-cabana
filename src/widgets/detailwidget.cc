@@ -170,10 +170,11 @@ void DetailWidget::restoreTabs(const QString active_msg_id, const QStringList& m
 void DetailWidget::refresh() {
   QStringList warnings;
   auto msg = dbc()->msg(msg_id);
+  auto *can_msg = can->snapshot(msg_id);
   if (msg) {
     if (msg_id.source == INVALID_SOURCE) {
       warnings.push_back(tr("No messages received."));
-    } else if (msg->size != can->snapshot(msg_id)->dat.size()) {
+    } else if (can_msg->ts > 0 && msg->size != can_msg->dat.size()) {
       warnings.push_back(tr("Message size (%1) is incorrect.").arg(msg->size));
     }
     for (auto s : binary_view->getOverlappingSignals()) {
