@@ -14,13 +14,15 @@ class ValueTableEditor : public QDialog {
   ValueTable value_table;
 
  private:
+ void addRow(const QString& val, const QString& desc);
+
   void setupConnections();
+  void handleSave();
   struct Delegate : public QStyledItemDelegate {
     Delegate(QWidget* parent) : QStyledItemDelegate(parent) {}
     QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
   };
 
-  void save();
 
   QTableWidget* table;
   QDialogButtonBox *btn_box;
