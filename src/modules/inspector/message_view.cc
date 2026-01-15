@@ -150,7 +150,6 @@ void MessageView::setMessage(const MessageId& message_id) {
 }
 
 void MessageView::resetState() {
-  // tabbar->clear();
   msg_id = MessageId();
   tabbar->blockSignals(true);
   for (int i = tabbar->count() - 1; i >= 0; --i) {
@@ -172,6 +171,7 @@ std::pair<QString, QStringList> MessageView::serializeMessageIds() const {
 }
 
 void MessageView::restoreTabs(const QString active_msg_id, const QStringList& msg_ids) {
+  resetState();
   tabbar->blockSignals(true);
   for (const auto& str_id : msg_ids) {
     MessageId id = MessageId::fromString(str_id);
@@ -181,8 +181,11 @@ void MessageView::restoreTabs(const QString active_msg_id, const QStringList& ms
   tabbar->blockSignals(false);
 
   auto active_id = MessageId::fromString(active_msg_id);
-  if (GetDBC()->msg(active_id) != nullptr)
+  if (GetDBC()->msg(active_id) != nullptr) {
     setMessage(active_id);
+  } else if (tabbar->count() > 0) {
+    tabbar->setCurrentIndex(0);
+  }
 }
 
 void MessageView::refresh() {
@@ -215,10 +218,11 @@ void MessageView::updateState(const std::set<MessageId>* msgs) {
   if ((msgs && !msgs->count(msg_id)))
     return;
 
-  if (tab_widget->currentIndex() == 0)
+  if (tab_widget->currentIndex() == 0) {
     binary_view->updateState();
-  else
+  } else {
     message_history->updateState();
+  }
 }
 
 void MessageView::editMsg() {
