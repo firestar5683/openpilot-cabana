@@ -24,7 +24,7 @@ static void appendCanEvents(const dbc::Signal* sig, const std::vector<const CanE
   }
 }
 
-void ChartSignal::updateSeries(SeriesType series_type, const MessageEventsMap* msg_new_events) {
+void ChartSignal::prepareData(const MessageEventsMap* msg_new_events, double min_x, double max_x) {
   // If no new events provided, we are doing a full refresh/clear
   if (!msg_new_events) {
     vals.clear();
@@ -52,12 +52,26 @@ void ChartSignal::updateSeries(SeriesType series_type, const MessageEventsMap* m
     for (const auto& p : vals) series_bounds.addPoint(p.y());
   }
 
+  last_range_ = {-1.0, -1.0};
+  updateRange(min_x, max_x);
+}
+
+void ChartSignal::updateSeries(SeriesType series_type) {
   const auto& points = series_type == SeriesType::StepLine ? step_vals : vals;
   series->replace(QVector<QPointF>(points.cbegin(), points.cend()));
 }
 
 void ChartSignal::updateRange(double min_x, double max_x) {
-  if (vals.empty()) return;
+  if (min_x == last_range_.first && max_x == last_range_.second) {
+    return;
+  }
+  last_range_ = {min_x, max_x};
+
+  if (vals.empty()) {
+    min = 0;
+    max = 0;
+    return;
+  }
 
   auto first = std::lower_bound(vals.cbegin(), vals.cend(), min_x, xLessThan);
   auto last = std::lower_bound(first, vals.cend(), max_x, xLessThan);

@@ -16,6 +16,9 @@ class Chart : public QChart {
   void alignLayout(int left_pos, bool force = false);
   void setTheme(QChart::ChartTheme theme);
   void removeIf(std::function<bool(const ChartSignal& s)> predicate);
+
+  void prepareData(const dbc::Signal* sig, const MessageEventsMap* msg_new_events = nullptr);
+  void updateSeries(const dbc::Signal* sig = nullptr);
   bool updateAxisXRange(double min, double max);
   void handleSignalChange(const dbc::Signal* sig);
   bool addSignal(const MessageId& msg_id, const dbc::Signal* sig);
@@ -23,7 +26,6 @@ class Chart : public QChart {
   double getTooltipTextAt(double sec, QStringList& text_list);
   void msgUpdated(MessageId id);
   void syncUI();
-  void updateSeries(const dbc::Signal* sig = nullptr, const MessageEventsMap* msg_new_events = nullptr);
   inline bool hasSignal(const MessageId& msg_id, const dbc::Signal* sig) const {
     return std::any_of(sigs_.cbegin(), sigs_.cend(), [&](auto& s) { return s.msg_id == msg_id && s.sig == sig; });
   }

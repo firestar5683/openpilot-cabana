@@ -78,6 +78,7 @@ bool Chart::addSignal(const MessageId& msg_id, const dbc::Signal* sig) {
   QXYSeries* series = createSeries(series_type, sig->color);
   sigs_.emplace_back(msg_id, sig, series);
 
+  prepareData(sig);
   updateSeries(sig);
   syncUI();
 
@@ -356,15 +357,24 @@ void Chart::setSeriesColor(QXYSeries* series, QColor color) {
   series->setColor(color);
 }
 
-void Chart::updateSeries(const dbc::Signal* sig, const MessageEventsMap* msg_new_events) {
+void Chart::prepareData(const dbc::Signal* sig, const MessageEventsMap* msg_new_events) {
+  double min_x = axis_x_->min();
+  double max_x = axis_x_->max();
   for (auto& s : sigs_) {
     if (!sig || s.sig == sig) {
-      s.updateSeries(series_type, msg_new_events);
+      s.prepareData(msg_new_events, min_x, max_x);
+    }
+  }
+}
+
+void Chart::updateSeries(const dbc::Signal* sig) {
+  for (auto& s : sigs_) {
+    if (!sig || s.sig == sig) {
+      s.updateSeries(series_type);
     }
   }
   updateAxisY();
-  // invoke resetChartCache in ui thread
-  QMetaObject::invokeMethod(this, &Chart::resetCache, Qt::QueuedConnection);
+  resetCache();
 }
 
 void Chart::handleSignalChange(const dbc::Signal* sig) {

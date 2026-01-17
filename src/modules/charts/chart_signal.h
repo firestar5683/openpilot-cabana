@@ -31,11 +31,13 @@ public:
   QPointF track_pt{};
   double min = 0;
   double max = 0;
-  void updateSeries(SeriesType series_type, const MessageEventsMap* msg_new_events = nullptr);
+  void prepareData(const MessageEventsMap* msg_new_events, double min_x, double max_x);
   void updateRange(double main_x, double max_x);
+  void updateSeries(SeriesType series_type);
 
 private:
   SeriesBounds series_bounds;
+  std::pair<double, double> last_range_{0, 0};
 };
 
 inline bool xLessThan(const QPointF &p, float x) { return p.x() < (x - EPSILON); }

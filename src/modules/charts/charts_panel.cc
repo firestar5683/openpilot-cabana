@@ -73,14 +73,18 @@ void ChartsPanel::setupConnections() {
   connect(scroll_area_->verticalScrollBar(), &QScrollBar::valueChanged, this, &ChartsPanel::updateHoverFromCursor);
 }
 
-void ChartsPanel::eventsMerged(const MessageEventsMap &new_events) {
+void ChartsPanel::eventsMerged(const MessageEventsMap& new_events) {
   if (charts.empty()) return;
 
   QtConcurrent::blockingMap(charts, [&new_events](ChartView* c) {
     if (c && c->chart_) {
-      c->chart_->updateSeries(nullptr, &new_events);
+      c->chart_->prepareData(nullptr, &new_events);
     }
   });
+
+  for (auto* c : charts) {
+    c->chart_->updateSeries(nullptr);
+  }
 }
 
 void ChartsPanel::timeRangeChanged(const std::optional<std::pair<double, double>> &time_range) {
