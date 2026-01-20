@@ -8,7 +8,9 @@
 
 #include "core/dbc/dbc_manager.h"
 
-const int VERTICAL_HEADER_WIDTH = 30;
+// 32-32px is the "sweet spot" for technical touch interfaces
+const int CELL_WIDTH = 32;
+const int CELL_HEIGHT = 32;
 
 class BinaryModel : public QAbstractTableModel {
  public:

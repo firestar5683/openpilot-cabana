@@ -194,14 +194,25 @@ const std::vector<std::array<uint32_t, 8>> &BinaryModel::getBitFlipChanges(size_
 QVariant BinaryModel::headerData(int section, Qt::Orientation orientation, int role) const {
   if (orientation == Qt::Vertical) {
     switch (role) {
-      case Qt::DisplayRole: return section;
-      case Qt::SizeHintRole: return QSize(VERTICAL_HEADER_WIDTH, 0);
-      case Qt::TextAlignmentRole: return Qt::AlignCenter;
+      case Qt::DisplayRole:
+        return section;
+
+      case Qt::SizeHintRole:
+        return QSize(CELL_WIDTH, CELL_HEIGHT);
+
+      case Qt::TextAlignmentRole:
+        return Qt::AlignCenter;
+
+      case Qt::FontRole: {
+        QFont font;
+        font.setPointSize(9);
+        font.setBold(true);
+        return font;
+      }
     }
   }
   return {};
 }
-
 QVariant BinaryModel::data(const QModelIndex &index, int role) const {
   auto item = (const BinaryModel::Item *)index.internalPointer();
   return role == Qt::ToolTipRole && item && !item->sigs.empty() ? signalToolTip(item->sigs.back()) : QVariant();
