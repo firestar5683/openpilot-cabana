@@ -42,7 +42,7 @@ void MessageBytesDelegate::paint(QPainter* painter, const QStyleOptionViewItem& 
       if (s == bin_view->hovered_sig) {
         painter->fillRect(option.rect, s->color.darker(125));
       } else {
-        drawSignalCell(painter, option, index, s);
+        drawSignalCell(painter, option, item, s);
       }
     }
   } else if (has_valid_val && item->bg_color.alpha() > 0) {
@@ -73,8 +73,7 @@ void MessageBytesDelegate::paint(QPainter* painter, const QStyleOptionViewItem& 
 }
 
 void MessageBytesDelegate::drawSignalCell(QPainter* painter, const QStyleOptionViewItem& option,
-                                          const QModelIndex& index, const dbc::Signal* sig) const {
-  const auto* item = static_cast<const BinaryModel::Item*>(index.internalPointer());
+                                          const BinaryModel::Item* item, const dbc::Signal* sig) const {
   const auto& b = item->borders;
   constexpr int h_space = 3, v_space = 2;
 

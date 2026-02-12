@@ -3,6 +3,7 @@
 #include <QStaticText>
 #include <QStyledItemDelegate>
 
+#include "binary_model.h"
 #include "core/dbc/dbc_message.h"
 
 class MessageBytesDelegate : public QStyledItemDelegate {
@@ -11,7 +12,7 @@ class MessageBytesDelegate : public QStyledItemDelegate {
 
  protected:
   void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
-  void drawSignalCell(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index,
+  void drawSignalCell(QPainter* painter, const QStyleOptionViewItem& option, const BinaryModel::Item* item,
                       const dbc::Signal* sig) const;
 
   QFont small_font, hex_font;
